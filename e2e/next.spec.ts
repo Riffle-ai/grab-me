@@ -16,3 +16,13 @@ test('⌥-click in next dev copies the call site, client and server owners, and 
   expect(text).not.toContain('warnings:')
   await expect(page.getByTestId('count')).toHaveText('0')
 })
+
+test('a custom onGrab behind a dev-only dynamic import gets the same snippet', async ({ page }) => {
+  const logged = page.waitForEvent('console', (m) => m.text().includes('</grab-me>'))
+  await page.goto('/custom')
+  await altClick(page, page.getByTestId('target'))
+  const text = (await logged).text()
+  expect(text).toMatch(/jsx: components\/card\.tsx:\d+/)
+  expect(text).toMatch(/CustomPage \(server\) — app\/custom\/page\.tsx:\d+/)
+  expect(text).not.toContain('warnings:')
+})
