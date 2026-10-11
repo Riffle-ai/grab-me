@@ -59,3 +59,19 @@ test('complexities reports each TypeScript function with its own CC and full lin
     { file: 'f.ts', name: 'branchy', cc: 3, start: 4, end: 5 },
   ])
 })
+
+test('an eslint-disable comment cannot hide a function from the gate', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'crap-'))
+  writeFileSync(
+    join(dir, 'g.ts'),
+    '/* eslint-disable */\nfunction hidden(a: number) {\n  return a ? 1 : 2\n}\n',
+  )
+  const found = await complexities(['*.ts'], dir)
+  assert.deepEqual(found, [{ file: 'g.ts', name: 'hidden', cc: 2, start: 2, end: 4 }])
+})
+
+test('a class field initializer has no function extent and fails loud', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'crap-'))
+  writeFileSync(join(dir, 'h.ts'), 'class K {\n  x = 1 ? 2 : 3\n}\n')
+  await assert.rejects(complexities(['*.ts'], dir), /h\.ts:2 no function extent/)
+})

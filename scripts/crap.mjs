@@ -60,6 +60,8 @@ export async function complexities(patterns, cwd = process.cwd()) {
       { ignores: ['**/*.test.ts', '**/*.test.tsx'] },
       {
         files: ['**/*.ts', '**/*.tsx'],
+        // Inline eslint-disable comments must not hide a function from the gate.
+        linterOptions: { noInlineConfig: true },
         languageOptions: { parser: tseslint.parser },
         plugins: { crap: { rules: { extent } } },
         rules: { complexity: ['error', 0], 'crap/extent': 'error' },
@@ -77,8 +79,11 @@ export async function complexities(patterns, cwd = process.cwd()) {
         const [innermost] = extents
           .filter((e) => within(e, m))
           .sort((x, y) => (before(x, y) ? 1 : -1))
+        const file = relative(cwd, result.filePath)
+        if (!innermost)
+          throw new Error(`${file}:${m.line} no function extent for complexity message`)
         return {
-          file: relative(cwd, result.filePath),
+          file,
           name: innermost.message,
           cc: Number(/complexity of (\d+)/.exec(m.message)[1]),
           start: innermost.line,
@@ -91,6 +96,10 @@ export async function complexities(patterns, cwd = process.cwd()) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const coverage = JSON.parse(readFileSync('coverage/coverage-final.json', 'utf8'))
   const functions = await complexities(['src/**/*.{ts,tsx}'])
+  if (!functions.length) {
+    console.error('crap: no functions found under src/ — refusing to pass an empty gate')
+    process.exit(1)
+  }
   const rows = crapRows(functions, coverage, process.cwd())
   for (const r of rows)
     console.log(
