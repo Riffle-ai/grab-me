@@ -7,7 +7,13 @@ const call = <T>(hook: unknown, ...args: unknown[]) => (hook as (...a: unknown[]
 it('is serve-only and shares the app React, so production carries nothing and hooks work', () => {
   const p: Plugin = grabMe()
   expect(p.apply).toBe('serve')
-  expect(call(p.config)).toEqual({ resolve: { dedupe: ['react', 'react-dom'] } })
+  expect(call(p.config)).toMatchObject({ resolve: { dedupe: ['react', 'react-dom'] } })
+})
+
+it('pre-bundles the client entry, which only the virtual module imports, so a cold start does not reload', () => {
+  expect(call(grabMe().config)).toMatchObject({
+    optimizeDeps: { include: ['@riffle-ai/grab-me/vite/client'] },
+  })
 })
 
 it('serves a virtual module that mounts the overlay with its options, minus roots', () => {
