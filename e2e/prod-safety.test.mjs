@@ -6,7 +6,9 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { test } from 'node:test'
 
-const MARKERS = ['data-grab-me', '__grab-me/', '/__nextjs_original-stack-frames']
+// Overlay, Vite endpoints, Next resolver, and the core's snippet header (so a leak of the
+// core without the overlay is caught too).
+const MARKERS = ['data-grab-me', '__grab-me/', '/__nextjs_original-stack-frames', '<grab-me url="']
 
 function files(dir) {
   return readdirSync(dir).flatMap((n) => {
@@ -14,21 +16,20 @@ function files(dir) {
     return statSync(p).isDirectory() ? files(p) : [p]
   })
 }
-const contains = (dir) =>
-  files(dir).filter(
-    (f) => /\.(js|html)$/.test(f) && MARKERS.some((m) => readFileSync(f, 'utf8').includes(m)),
-  )
+const contains = (dir, ext = /\.(js|html)$/) =>
+  files(dir).filter((f) => ext.test(f) && MARKERS.some((m) => readFileSync(f, 'utf8').includes(m)))
 
-test('the markers are in the package, so searching a build for them is meaningful', () => {
-  const dist = files('dist')
-    .map((f) => readFileSync(f, 'utf8'))
-    .join('\n')
-  for (const m of MARKERS) assert.ok(dist.includes(m), `marker ${m} not in dist`)
-})
+for (const m of MARKERS) {
+  test(`marker ${m} is in the package, so searching a build for it is meaningful`, () => {
+    const found = files('dist').find((f) => readFileSync(f, 'utf8').includes(m))
+    assert.ok(found, `marker ${m} not in any dist file`)
+  })
+}
 
 test('next build ships no grab-me to the browser', () => {
   execFileSync('pnpm', ['build'], { cwd: 'examples/next', stdio: 'inherit' })
   assert.deepEqual(contains('examples/next/.next/static'), [])
+  assert.deepEqual(contains('examples/next/.next/server', /\.html$/), [], 'prerendered html')
 })
 
 test('vite build ships no grab-me at all', () => {
