@@ -20,6 +20,6 @@ test('client components keep their directive, so Next treats them as client boun
 
 test('the Next wrapper reaches its client half only through a dynamic import', () => {
   const src = readFileSync('dist/next/index.js', 'utf8')
-  assert.doesNotMatch(src, /^import .*client\.js/m)
-  assert.match(src, /import\(['"]\.\/client\.js['"]\)/)
+  assert.doesNotMatch(src, /\bfrom\s*['"]\.\/client\.js['"]|^import\s*['"]\.\/client\.js['"]/m)
+  assert.match(src, /^\s*const \{ NextGrabMeOverlay \} = await import\(['"]\.\/client\.js['"]\)/m)
 })
