@@ -1,0 +1,10 @@
+node_modules
+dist
+.pack
+coverage
+test-results
+playwright-report
+examples/*/.next
+examples/*/dist
+examples/*/node_modules
+examples/*/pnpm-lock.yaml

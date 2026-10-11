@@ -1,0 +1,94 @@
+{
+  "name": "@riffle-ai/grab-me",
+  "version": "0.1.0",
+  "description": "Hold ⌥ and click any element in your React dev app to copy an LLM-ready reference: JSX call site, owning components (server ones too), and the design tokens it wears.",
+  "license": "MIT",
+  "author": "Riffle",
+  "contributors": [
+    "Joris Rood (original author)"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20.19"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./next": {
+      "types": "./dist/next/index.d.ts",
+      "default": "./dist/next/index.js"
+    },
+    "./next/route": {
+      "types": "./dist/next/route.d.ts",
+      "default": "./dist/next/route.js"
+    },
+    "./vite": {
+      "types": "./dist/vite/plugin.d.ts",
+      "default": "./dist/vite/plugin.js"
+    },
+    "./vite/client": {
+      "types": "./dist/vite/client.d.ts",
+      "default": "./dist/vite/client.js"
+    }
+  },
+  "scripts": {
+    "prebuild": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --check .",
+    "test": "vitest run",
+    "test:scripts": "node --test \"scripts/*.test.mjs\"",
+    "crap": "vitest run --coverage && node scripts/crap.mjs",
+    "pack:local": "node scripts/pack.mjs",
+    "e2e": "pnpm pack:local && playwright test",
+    "test:prod": "pnpm pack:local && node --test e2e/prod-safety.test.mjs",
+    "check": "pnpm typecheck && pnpm lint && pnpm format && pnpm test && pnpm test:scripts",
+    "release": "pnpm build && changeset publish"
+  },
+  "peerDependencies": {
+    "next": ">=16",
+    "react": "^19",
+    "react-dom": "^19",
+    "vite": ">=6"
+  },
+  "peerDependenciesMeta": {
+    "next": {
+      "optional": true
+    },
+    "vite": {
+      "optional": true
+    }
+  },
+  "packageManager": "pnpm@10.33.0",
+  "dependencies": {
+    "@jridgewell/trace-mapping": "^0.3.31"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^3.0.3",
+    "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.64.0",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "@vitest/browser-playwright": "^5.0.3",
+    "@vitest/coverage-v8": "^5.0.3",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "prettier": "^3.9.10",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.71.1",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.3",
+    "vitest-browser-react": "^2.3.0"
+  }
+}

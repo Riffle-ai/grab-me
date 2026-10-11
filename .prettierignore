@@ -1,0 +1,7 @@
+dist
+.pack
+coverage
+test/legacy
+pnpm-lock.yaml
+examples/*/.next
+examples/*/dist
