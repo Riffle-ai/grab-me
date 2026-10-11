@@ -1,6 +1,6 @@
 {
   "name": "@riffle-ai/grab-me",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Hold ⌥ and click any element in your React dev app to copy an LLM-ready reference: JSX call site, owning components (server ones too), and the design tokens it wears.",
   "license": "MIT",
   "author": "Riffle",

@@ -1,0 +1,25 @@
+# React and Next internals are what grab-me reads; this run finds out first when they move.
+name: canary
+on:
+  schedule: [{ cron: '0 6 * * 1' }]
+  workflow_dispatch:
+permissions: { contents: read, issues: write }
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm pack:local
+      - run: pnpm --dir examples/next add next@canary react@latest react-dom@latest
+      - run: pnpm --dir examples/vite add react@latest react-dom@latest vite@latest
+      - run: pnpm exec playwright test
+      - if: failure()
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          gh issue create --title "Canary: React or Next moved under grab-me" \
+            --body "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
