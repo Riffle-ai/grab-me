@@ -12,7 +12,7 @@ function need<T>(x: T | undefined): T {
 
 // The dev server's two answers, served identically to the legacy code and to the package:
 // the legacy fetches /api/dev/grab-me and /__nextjs_original-stack-frames itself, and
-// nextResolver() fetches the same two URLs.
+// nextResolver({ distDir: '/repo/.next/dev' }) fetches the same two URLs.
 function devServer(defs: Record<string, Array<{ file: string; line: number }>>) {
   return vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input)
@@ -68,7 +68,12 @@ it('writes the same snippet as the dashboard’s original, for one element and f
   const b = need(b0)
   const section = need(a.parentElement ?? undefined)
   for (const els of [[a], [a, b, section]]) {
-    const ours = format(await grab(els, { resolver: nextResolver(), stopAfter: ['ui/'] }))
+    const ours = format(
+      await grab(els, {
+        resolver: nextResolver({ distDir: '/repo/.next/dev' }),
+        stopAfter: ['ui/'],
+      }),
+    )
     expect(ours).toBe(await legacy(els))
   }
 })
@@ -77,7 +82,9 @@ it('falls back to the bare owner chain exactly as the original when nothing is l
   vi.stubGlobal('fetch', devServer({}))
   const screen = await render(<Screen />)
   const a = need(screen.getByTestId('target').elements()[0])
-  expect(format(await grab([a], { resolver: nextResolver() }))).toBe(await legacy([a]))
+  expect(format(await grab([a], { resolver: nextResolver({ distDir: '/repo/.next/dev' }) }))).toBe(
+    await legacy([a]),
+  )
 })
 
 it('says what it could not see instead of dropping it silently', async () => {
