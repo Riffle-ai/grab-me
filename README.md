@@ -44,13 +44,18 @@ pnpm add -D @riffle-ai/grab-me
 ```tsx
 // app/layout.tsx
 import { GrabMe } from '@riffle-ai/grab-me/next'
-// …inside <body>, after {children}:
-;<GrabMe />
-```
 
-`<GrabMe />` takes `stopAfter`, `hosts` and `endpoint` (where the route below is mounted;
-default `/api/dev/grab-me`). It has no `onGrab`: functions do not cross from a server component,
-and the Next resolver is not a public export yet.
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        {children}
+        <GrabMe />
+      </body>
+    </html>
+  )
+}
+```
 
 ```ts
 // app/api/dev/grab-me/route.ts
@@ -59,6 +64,25 @@ export const GET = createGrabMeRoute()
 ```
 
 `createGrabMeRoute({ roots })` narrows where component definitions are searched.
+
+`<GrabMe />` is the zero-config path. It takes `stopAfter`, `hosts` and `endpoint` (where the
+route is mounted; default `/api/dev/grab-me`), but no `onGrab`: functions do not cross from a
+server component. For your own handling, render `GrabMeOverlay` from a client component with
+`nextResolver()` (keep the route above):
+
+```tsx
+// app/dev-grab.tsx
+'use client'
+import { GrabMeOverlay } from '@riffle-ai/grab-me'
+import { nextResolver } from '@riffle-ai/grab-me/next'
+
+const resolver = nextResolver()
+
+export function DevGrab() {
+  if (process.env.NODE_ENV !== 'development') return null
+  return <GrabMeOverlay resolver={resolver} onGrab={(result, text) => console.log(text)} />
+}
+```
 
 ### Vite + React 19
 
@@ -83,17 +107,17 @@ Options: `roots`, `stopAfter`, `hosts`.
 
 ## Options
 
-| Option                   | Default                           |                                                                                          |
-| ------------------------ | --------------------------------- | ---------------------------------------------------------------------------------------- |
-| `stopAfter`              | `[]`                              | path prefixes of library components (e.g. `['ui/']`): show them, plus two app components |
-| `hosts`                  | `localhost`, `127.0.0.1`, `[::1]` | hostnames the overlay turns on for                                                       |
-| `roots` (route / plugin) | whole project                     | folders to search for component definitions                                              |
+| Option                     | Default                           |                                                                                                                                    |
+| -------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `stopAfter`                | `[]`                              | path prefixes of library components (e.g. `['ui/']`): show them, plus two app components                                           |
+| `hosts`                    | `localhost`, `127.0.0.1`, `[::1]` | hostnames the overlay turns on for                                                                                                 |
+| `roots` (route / plugin)   | whole project                     | folders to search for component definitions                                                                                        |
+| `endpoint` (Next)          | `/api/dev/grab-me`                | where `createGrabMeRoute()` is mounted                                                                                             |
+| `onGrab` (`GrabMeOverlay`) | copy to clipboard                 | `(result, text) => …` for your own handling; `GrabMeOverlay` is exported from the package root, `viteResolver` from `/vite/client` |
 
 The definition search skips `node_modules`, dot-folders and any folder named `build`, `dist`,
 `out` or `coverage` at any depth, and does not follow symlinks. Use `roots` to narrow the search
 or to point it somewhere else.
-| `endpoint` (Next) | `/api/dev/grab-me` | where `createGrabMeRoute()` is mounted |
-| `onGrab` (`GrabMeOverlay`) | copy to clipboard | `(result, text) => …` for your own handling; `GrabMeOverlay` is exported from the package root, `viteResolver` from `/vite/client` |
 
 ## Programmatic
 

@@ -3,6 +3,7 @@
 import type { NextGrabMeProps } from './client.js'
 
 export type { NextGrabMeProps } from './client.js'
+export { nextResolver, type NextResolverOptions } from './resolver.js'
 
 export async function GrabMe(props: NextGrabMeProps) {
   if (process.env.NODE_ENV === 'development') {

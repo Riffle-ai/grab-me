@@ -46,7 +46,10 @@ const frame = {
   column1: 1,
 }
 
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.unstubAllEnvs()
+})
 
 it('throws what Next rejected with, so grab() can warn instead of dropping the jsx line', async () => {
   stubNext([{ status: 'rejected', reason: "Unknown url scheme 'http'" }])
@@ -70,4 +73,15 @@ it('throws when Next did not expose its dist dir', async () => {
   await expect(nextResolver().frames([frame], false)).rejects.toThrow(
     'Next did not expose its dist dir',
   )
+})
+
+it('defaults the dist dir to what Next defines in process.env.__NEXT_DIST_DIR', async () => {
+  vi.stubEnv('__NEXT_DIST_DIR', '/repo/.next/dev')
+  stubNext([
+    { status: 'fulfilled', value: { originalStackFrame: { file: '/repo/ui/a.tsx', line1: 7 } } },
+  ])
+  await nextResolver().frames([frame], false)
+  const post = vi.mocked(fetch).mock.calls.find(([url]) => String(url).startsWith('/__nextjs'))
+  const sent = JSON.parse((post?.[1] as RequestInit).body as string)
+  expect(sent.frames[0].file).toBe('file:///repo/.next/dev/static/a.js')
 })

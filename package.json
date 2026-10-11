@@ -4,6 +4,10 @@
   "description": "Hold ⌥ and click any element in your React dev app to copy an LLM-ready reference: JSX call site, owning components (server ones too), and the design tokens it wears.",
   "license": "MIT",
   "author": "Riffle",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Riffle-ai/grab-me.git"
+  },
   "contributors": [
     "Joris Rood (original author)"
   ],

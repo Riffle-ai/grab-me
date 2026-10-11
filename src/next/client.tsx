@@ -9,10 +9,7 @@ import { nextResolver, type NextResolverOptions } from './resolver.js'
 
 export type NextGrabMeProps = Pick<GrabMeProps, 'stopAfter' | 'hosts'> & NextResolverOptions
 
-export function NextGrabMeOverlay({ endpoint, ...props }: NextGrabMeProps) {
-  const resolver = useMemo(
-    () => nextResolver({ endpoint, distDir: process.env.__NEXT_DIST_DIR }),
-    [endpoint],
-  )
+export function NextGrabMeOverlay({ endpoint, distDir, ...props }: NextGrabMeProps) {
+  const resolver = useMemo(() => nextResolver({ endpoint, distDir }), [endpoint, distDir])
   return <GrabMeOverlay resolver={resolver} {...props} />
 }

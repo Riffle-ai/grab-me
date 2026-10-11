@@ -6,7 +6,7 @@ import { ok, type Resolver, type Site } from '../core/resolver.js'
 export interface NextResolverOptions {
   /** Where createGrabMeRoute() is mounted. */
   endpoint?: string
-  /** Next's absolute dist dir (process.env.__NEXT_DIST_DIR, read where the app's bundler defines it). */
+  /** Next's absolute dist dir; defaults to process.env.__NEXT_DIST_DIR, which Next defines in dev. */
   distDir?: string
 }
 
@@ -69,7 +69,8 @@ function first(data: NextFrame[], root: string | null): Site | null {
 
 export function nextResolver({
   endpoint = '/api/dev/grab-me',
-  distDir,
+  // Read at call time: Next defines this for client bundles, package code included.
+  distDir = process.env.__NEXT_DIST_DIR,
 }: NextResolverOptions = {}): Resolver {
   let root: Promise<string | null> | undefined
   const rootOf = () =>
