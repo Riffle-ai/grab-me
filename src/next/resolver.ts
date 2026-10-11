@@ -20,6 +20,14 @@ export function projectPath(file: string, root: string | null): string {
   return root && path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path
 }
 
+// Turbopack's trace endpoint rejects http(s) URLs ("Unknown url scheme 'http'", Next 16.2.1)
+// but traces the chunk's path on disk, which for `next dev` is <root>/.next/dev/<path after
+// /_next/>. Server frames already arrive as file paths and pass through untouched.
+export function chunkOnDisk(file: string, root: string | null): string {
+  const m = root ? /^https?:\/\/[^/]+\/_next\/([^?#]+)/.exec(file) : null
+  return m ? `${root}/.next/dev/${m[1]}` : file
+}
+
 const isProjectFile = (file: string) => !file.includes('node_modules') && !file.startsWith('<')
 
 function original(r: NextFrame) {
@@ -52,18 +60,16 @@ export function nextResolver({
 
   return {
     async frames(frames: Frame[], server: boolean) {
-      const [res, base] = await Promise.all([
-        fetch('/__nextjs_original-stack-frames', {
-          method: 'POST',
-          body: JSON.stringify({
-            frames,
-            isServer: server,
-            isEdgeServer: false,
-            isAppDirectory: true,
-          }),
-        }).then((r) => ok(r, '/__nextjs_original-stack-frames')),
-        rootOf(),
-      ])
+      const base = await rootOf()
+      const res = await fetch('/__nextjs_original-stack-frames', {
+        method: 'POST',
+        body: JSON.stringify({
+          frames: frames.map((f) => ({ ...f, file: chunkOnDisk(f.file, base) })),
+          isServer: server,
+          isEdgeServer: false,
+          isAppDirectory: true,
+        }),
+      }).then((r) => ok(r, '/__nextjs_original-stack-frames'))
       return first((await res.json()) as NextFrame[], base)
     },
     async locate(names: string[]) {

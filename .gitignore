@@ -9,3 +9,4 @@ examples/*/dist
 examples/*/node_modules
 examples/*/pnpm-lock.yaml
 .vitest/
+examples/*/next-env.d.ts

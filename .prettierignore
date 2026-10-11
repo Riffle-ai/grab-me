@@ -5,3 +5,4 @@ test/legacy
 pnpm-lock.yaml
 examples/*/.next
 examples/*/dist
+examples/*/next-env.d.ts
