@@ -30,14 +30,17 @@ function walk(dir: string, out: string[]) {
   }
 }
 
+// Files of one root are sorted; the roots keep the order they were given in.
 function files(root: string, roots: string[]): string[] {
   const out: string[] = []
   for (const r of roots) {
     if (!existsSync(join(root, r)))
       throw new Error(`grab-me: root "${r}" does not exist under ${root}`)
-    walk(join(root, r), out)
+    const own: string[] = []
+    walk(join(root, r), own)
+    out.push(...own.sort())
   }
-  return out.sort()
+  return out
 }
 
 // The component name a line defines, if it defines one.

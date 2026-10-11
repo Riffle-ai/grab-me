@@ -42,3 +42,13 @@ it('searches only the given roots when there are some', () => {
 it('says so when a configured root does not exist, instead of finding nothing quietly', () => {
   expect(() => locate(['Card'], { root, roots: ['nope'] })).toThrow(/root "nope" does not exist/)
 })
+
+it('walks the roots in the order given and sorts only within each, so the first root’s definition comes first', () => {
+  expect(locate(['Card'], { root, roots: ['src', 'lib'] })).toEqual({
+    Card: [
+      { file: 'src/card.jsx', line: 2 },
+      { file: 'lib/two.ts', line: 1 },
+    ],
+  })
+  expect(locate(['Card'], { root, roots: ['lib', 'src'] }).Card?.[0]?.file).toBe('lib/two.ts')
+})
