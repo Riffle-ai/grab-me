@@ -10,7 +10,9 @@
   },
   "contributors": [
     {
-      "name": "Joris Rood"
+      "name": "Joris Rood",
+      "email": "joris@riffle.so",
+      "url": "https://github.com/joris-riffle"
     }
   ],
   "type": "module",
