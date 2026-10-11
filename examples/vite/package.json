@@ -1,0 +1,21 @@
+{
+  "name": "grab-me-example-vite",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5174 --strictPort",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@riffle-ai/grab-me": "file:../../.pack/grab-me.tgz",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.1.2",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.4"
+  }
+}
