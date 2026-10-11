@@ -2,13 +2,22 @@ import { describe, expect, it } from 'vitest'
 import { pick } from './grab.js'
 import type { Owner } from './fiber.js'
 
-const client = (name: string): Owner => ({ tag: 0, type: Object.defineProperty(() => null, 'name', { value: name }) })
+const client = (name: string): Owner => ({
+  tag: 0,
+  type: Object.defineProperty(() => null, 'name', { value: name }),
+})
 const server = (name: string): Owner => ({ name })
 const at = (file: string, line = 1) => [{ file, line }]
 
 describe('pick', () => {
   it('shows library components until two app components, as the dashboard did with ui/', () => {
-    const chain = [client('Button'), client('Row'), client('Table'), server('Page'), server('Layout')]
+    const chain = [
+      client('Button'),
+      client('Row'),
+      client('Table'),
+      server('Page'),
+      server('Layout'),
+    ]
     const defs = {
       Button: at('ui/button.tsx'),
       Row: at('features/row.tsx'),
@@ -16,7 +25,12 @@ describe('pick', () => {
       Page: at('app/page.tsx'),
       Layout: at('app/layout.tsx'),
     }
-    expect(pick(chain, defs, ['ui/']).map((o) => o.name)).toEqual(['Button', 'Row', 'Table', 'Page'])
+    expect(pick(chain, defs, ['ui/']).map((o) => o.name)).toEqual([
+      'Button',
+      'Row',
+      'Table',
+      'Page',
+    ])
     expect(pick(chain, defs, []).map((o) => o.name)).toEqual(['Button', 'Row'])
   })
 

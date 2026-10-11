@@ -58,7 +58,11 @@ function cut(list: Located[], stopAfter: string[]): Located[] {
   return out
 }
 
-export function pick(chain: Owner[], defs: Record<string, Definition[]>, stopAfter: string[]): Shown[] {
+export function pick(
+  chain: Owner[],
+  defs: Record<string, Definition[]>,
+  stopAfter: string[],
+): Shown[] {
   const ours = cut(located(chain, defs), stopAfter)
   if (ours.length) return ours
   return chain.slice(0, SHOW_OWNERS).map((o) => ({ name: ownerName(o), server: !isFiber(o) }))
@@ -79,11 +83,17 @@ async function sources(el: Element, chain: Owner[], resolver: Resolver, warnings
     chain.length
       ? attempt('component definitions', warnings, {}, () => resolver.locate(chain.map(ownerName)))
       : {},
-    site ? attempt('source frames', warnings, null, () => resolver.frames(site.frames, site.server)) : null,
+    site
+      ? attempt('source frames', warnings, null, () => resolver.frames(site.frames, site.server))
+      : null,
   ])
 }
 
-async function element(el: Element, opts: GrabOptions, warnings: Set<string>): Promise<GrabbedElement> {
+async function element(
+  el: Element,
+  opts: GrabOptions,
+  warnings: Set<string>,
+): Promise<GrabbedElement> {
   const chain = owners(el)
   const [defs, jsx] = opts.resolver ? await sources(el, chain, opts.resolver, warnings) : [{}, null]
   return {

@@ -14,7 +14,9 @@ interface NextFrame {
 }
 
 export function projectPath(file: string, root: string | null): string {
-  const path = decodeURIComponent(file).replace(/^file:\/\//, '').replace(/^\[project\]\//, '')
+  const path = decodeURIComponent(file)
+    .replace(/^file:\/\//, '')
+    .replace(/^\[project\]\//, '')
   return root && path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path
 }
 
@@ -39,7 +41,9 @@ function first(data: NextFrame[], root: string | null): Site | null {
   return null
 }
 
-export function nextResolver({ endpoint = '/api/dev/grab-me' }: NextResolverOptions = {}): Resolver {
+export function nextResolver({
+  endpoint = '/api/dev/grab-me',
+}: NextResolverOptions = {}): Resolver {
   let root: Promise<string | null> | undefined
   const rootOf = () =>
     (root ??= fetch(`${endpoint}?names=`)
@@ -51,7 +55,12 @@ export function nextResolver({ endpoint = '/api/dev/grab-me' }: NextResolverOpti
       const [res, base] = await Promise.all([
         fetch('/__nextjs_original-stack-frames', {
           method: 'POST',
-          body: JSON.stringify({ frames, isServer: server, isEdgeServer: false, isAppDirectory: true }),
+          body: JSON.stringify({
+            frames,
+            isServer: server,
+            isEdgeServer: false,
+            isAppDirectory: true,
+          }),
         }).then((r) => ok(r, '/__nextjs_original-stack-frames')),
         rootOf(),
       ])

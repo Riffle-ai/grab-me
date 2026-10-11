@@ -14,11 +14,15 @@ const PARTS: Array<(s: Styles) => string | undefined> = [
   (s) => s.padding && `padding ${s.padding.map(fmt).join(' ')}`,
   (s) => s.layout && `${s.layout.display} ${s.layout.direction}`,
   (s) => s.layout?.gap && `gap ${fmt(s.layout.gap)}`,
-  (s) => s.borders.map((b) => `border-${b.side} ${b.width} ${fmt(b.color)}`).join(' · ') || undefined,
+  (s) =>
+    s.borders.map((b) => `border-${b.side} ${b.width} ${fmt(b.color)}`).join(' · ') || undefined,
   (s) => s.radius && `radius ${fmt(s.radius)}`,
 ]
 
-const styleLine = (s: Styles) => PARTS.map((p) => p(s)).filter(Boolean).join(' · ')
+const styleLine = (s: Styles) =>
+  PARTS.map((p) => p(s))
+    .filter(Boolean)
+    .join(' · ')
 
 function tagLine(e: GrabbedElement, n: number, total: number) {
   const attrs = Object.entries(e.attrs).map(([a, v]) => `${a}="${v}"`)

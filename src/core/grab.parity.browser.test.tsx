@@ -20,7 +20,10 @@ function devServer(defs: Record<string, Array<{ file: string; line: number }>>) 
       return Response.json(defs, { headers: { 'x-grab-me-root': '/repo' } })
     if (url === '/__nextjs_original-stack-frames')
       return Response.json([
-        { status: 'fulfilled', value: { originalStackFrame: { file: '[project]/ui/card.tsx', line1: 5 } } },
+        {
+          status: 'fulfilled',
+          value: { originalStackFrame: { file: '[project]/ui/card.tsx', line1: 5 } },
+        },
       ])
     throw new Error(`unexpected fetch ${url}`)
   })
@@ -45,7 +48,10 @@ function Screen() {
   )
 }
 
-const DEFS = { Card: [{ file: 'ui/card.tsx', line: 3 }], Screen: [{ file: 'features/screen.tsx', line: 9 }] }
+const DEFS = {
+  Card: [{ file: 'ui/card.tsx', line: 3 }],
+  Screen: [{ file: 'features/screen.tsx', line: 9 }],
+}
 
 beforeEach(() => {
   const s = document.createElement('style')
