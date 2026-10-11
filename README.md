@@ -68,21 +68,39 @@ export const GET = createGrabMeRoute()
 `<GrabMe />` is the zero-config path. It takes `stopAfter`, `hosts` and `endpoint` (where the
 route is mounted; default `/api/dev/grab-me`), but no `onGrab`: functions do not cross from a
 server component. For your own handling, render `GrabMeOverlay` from a client component with
-`nextResolver()` (keep the route above):
+`nextResolver()` (keep the route above). Load that component only in development, and create
+the resolver inside it, so a production build never reaches any of it:
 
 ```tsx
 // app/dev-grab.tsx
 'use client'
 import { GrabMeOverlay } from '@riffle-ai/grab-me'
 import { nextResolver } from '@riffle-ai/grab-me/next'
+import { useMemo } from 'react'
 
-const resolver = nextResolver()
-
-export function DevGrab() {
-  if (process.env.NODE_ENV !== 'development') return null
+export default function DevGrab() {
+  const resolver = useMemo(() => nextResolver(), [])
   return <GrabMeOverlay resolver={resolver} onGrab={(result, text) => console.log(text)} />
 }
 ```
+
+```tsx
+// app/dev-grab-loader.tsx
+'use client'
+import dynamic from 'next/dynamic'
+
+// The import sits in a branch that exists only in development: no chunk in production.
+const DevGrab = process.env.NODE_ENV === 'development' ? dynamic(() => import('./dev-grab')) : null
+
+export function DevGrabLoader() {
+  return DevGrab && <DevGrab />
+}
+```
+
+Render `<DevGrabLoader />` once in your layout. `examples/next` runs exactly this on `/custom`,
+and the production-safety test builds it.
+
+Next support is tested under Turbopack, the default bundler of Next 16.
 
 ### Vite + React 19
 
@@ -94,6 +112,11 @@ export default defineConfig({ plugins: [react(), grabMe()] })
 
 Add only the plugin: it injects the overlay into `index.html` itself, in `vite` dev only.
 Options: `roots`, `stopAfter`, `hosts`.
+
+The adapter expects a Vite app with an `index.html` (a SPA): the plugin mounts the overlay
+through `transformIndexHtml`. In an SSR framework built on Vite, that hook may not run and
+the overlay will not appear; render `GrabMeOverlay` yourself in a client component with
+`viteResolver()` from `@riffle-ai/grab-me/vite/client`, keeping the plugin for its two endpoints.
 
 ## Use
 
@@ -113,6 +136,7 @@ Options: `roots`, `stopAfter`, `hosts`.
 | `hosts`                    | `localhost`, `127.0.0.1`, `[::1]` | hostnames the overlay turns on for                                                                                                 |
 | `roots` (route / plugin)   | whole project                     | folders to search for component definitions                                                                                        |
 | `endpoint` (Next)          | `/api/dev/grab-me`                | where `createGrabMeRoute()` is mounted                                                                                             |
+| `distDir` (Next)           | `process.env.__NEXT_DIST_DIR`     | Next's absolute dist dir, for a custom `distDir`; Next defines it in dev                                                           |
 | `onGrab` (`GrabMeOverlay`) | copy to clipboard                 | `(result, text) => …` for your own handling; `GrabMeOverlay` is exported from the package root, `viteResolver` from `/vite/client` |
 
 The definition search skips `node_modules`, dot-folders and any folder named `build`, `dist`,
@@ -135,8 +159,9 @@ attributes, text, styles and tokens.
 React 19's dev build keeps each element's owner and JSX call stack. grab-me reads them,
 asks your dev server to map the stack back to source (Next's own endpoint, or Vite's
 module graph), and finds component definitions by name in your source. Anything it cannot
-see (a failed lookup, an unreadable stylesheet) appears under `warnings:` in the snippet
-rather than being dropped.
+see (a failed lookup of source frames or component definitions) appears under `warnings:` in
+the snippet rather than being dropped. Stylesheets from another origin are skipped by design:
+the browser hides their rules, and tokens are read from the page's own.
 
 ## Related
 
