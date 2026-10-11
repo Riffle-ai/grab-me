@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest'
 import { kindOf } from './tokens.js'
 
-it('sorts custom properties as the dashboard did: --text-* sub-tokens are not sizes', () => {
+it('sorts custom properties as the original grab-me did: --text-* sub-tokens are not sizes', () => {
   expect(kindOf('--color-ink')).toBe('color')
   expect(kindOf('--color-a--b')).toBe('color')
   expect(kindOf('--spacing')).toBe('space')

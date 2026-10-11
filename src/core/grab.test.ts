@@ -10,7 +10,7 @@ const server = (name: string): Owner => ({ name })
 const at = (file: string, line = 1) => [{ file, line }]
 
 describe('pick', () => {
-  it('shows library components until two app components, as the dashboard did with ui/', () => {
+  it('shows library components until two app components, as the original grab-me did with ui/', () => {
     const chain = [
       client('Button'),
       client('Row'),

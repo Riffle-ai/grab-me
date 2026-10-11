@@ -60,7 +60,7 @@ beforeEach(() => {
 })
 afterEach(() => vi.unstubAllGlobals())
 
-it('writes the same snippet as the dashboard’s original, for one element and for several', async () => {
+it('writes the same snippet as the original grab-me (test/legacy), for one element and for several', async () => {
   vi.stubGlobal('fetch', devServer(DEFS))
   const screen = await render(<Screen />)
   const [a0, b0] = screen.getByTestId('target').elements()
@@ -74,6 +74,9 @@ it('writes the same snippet as the dashboard’s original, for one element and f
         stopAfter: ['ui/'],
       }),
     )
+    // Self-guard: identical degradation on both sides (no jsx, no tokens) must not pass.
+    expect(ours).toMatch(/jsx: .*\n {2}rendered by:\n/)
+    expect(ours).toContain('--text-sm')
     expect(ours).toBe(await legacy(els))
   }
 })

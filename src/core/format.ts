@@ -1,4 +1,4 @@
-// The <grab-me> text an agent reads. Byte-identical to the dashboard's original snippet
+// The <grab-me> text an agent reads. Byte-identical to the original grab-me's snippet
 // whenever there are no warnings (asserted against test/legacy/inspect.ts).
 import type { Styled } from './tokens.js'
 import type { Styles } from './describe.js'

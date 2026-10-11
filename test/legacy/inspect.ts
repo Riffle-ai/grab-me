@@ -1,4 +1,4 @@
-// The dashboard's original inspect.ts (b33cf8b9), kept verbatim as the parity oracle:
+// The original inspect.ts (the original grab-me, the repository's first commit), kept verbatim as the parity oracle:
 // src/core/grab.parity.browser.test.tsx asserts format(grab()) equals its snippet().
 // Do not edit; delete when 1.0 changes the format on purpose.
 // Reads what React and the browser know about a DOM node and writes it as a snippet an
