@@ -33,14 +33,19 @@ export function fiberOf(el: Element): Fiber | null {
   return key ? ((el as unknown as Record<string, Fiber>)[key] ?? null) : null
 }
 
+function functionName(fn: { displayName?: string; name?: string }): string | null {
+  return fn.displayName || fn.name || null
+}
+
+function objectName(t: { displayName?: string; render?: unknown; type?: unknown }): string | null {
+  return t.displayName || typeName(t.render) || typeName(t.type)
+}
+
 export function typeName(type: unknown): string | null {
-  if (typeof type === 'function') {
-    const fn = type as { displayName?: string; name?: string }
-    return fn.displayName || fn.name || null
-  }
+  if (typeof type === 'function')
+    return functionName(type as { displayName?: string; name?: string })
   if (type && typeof type === 'object') {
-    const t = type as { displayName?: string; render?: unknown; type?: unknown }
-    return t.displayName || typeName(t.render) || typeName(t.type)
+    return objectName(type as { displayName?: string; render?: unknown; type?: unknown })
   }
   return null
 }
