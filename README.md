@@ -171,4 +171,4 @@ tokens, server components and multi-element snippets.
 
 ## Credits
 
-Built by [Joris Rood](https://github.com/joris-riffle) at Riffle. MIT licensed.
+Built by [Joris Rood](https://github.com/joris-riffle) at [Riffle](www.riffle.so). MIT licensed.
