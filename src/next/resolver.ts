@@ -76,7 +76,11 @@ export function nextResolver({
   const rootOf = () =>
     (root ??= fetch(`${endpoint}?names=`)
       .then((res) => ok(res, endpoint))
-      .then((res) => res.headers.get('x-grab-me-root')))
+      .then((res) => res.headers.get('x-grab-me-root'))
+      .catch((err) => {
+        root = undefined // a transient failure must not cost every later grab its jsx line
+        throw err
+      }))
 
   return {
     async frames(frames: Frame[], server: boolean) {

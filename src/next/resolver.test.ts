@@ -85,3 +85,23 @@ it('defaults the dist dir to what Next defines in process.env.__NEXT_DIST_DIR', 
   const sent = JSON.parse((post?.[1] as RequestInit).body as string)
   expect(sent.frames[0].file).toBe('file:///repo/.next/dev/static/a.js')
 })
+
+it('asks for the project root again after a transient failure, so later grabs keep their jsx line', async () => {
+  const site = {
+    status: 'fulfilled',
+    value: { originalStackFrame: { file: '/repo/ui/a.tsx', line1: 7 } },
+  }
+  let routeCalls = 0
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string) => {
+      if (url.startsWith('/__nextjs')) return respond([site])
+      return ++routeCalls === 1
+        ? new Response('', { status: 500 })
+        : respond({}, { 'x-grab-me-root': '/repo' })
+    }),
+  )
+  const resolver = nextResolver({ distDir: '/d' })
+  await expect(resolver.frames([frame], false)).rejects.toThrow()
+  expect(await resolver.frames([frame], false)).toEqual({ file: 'ui/a.tsx', line: 7 })
+})
