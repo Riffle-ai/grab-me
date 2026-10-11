@@ -9,7 +9,9 @@
     "url": "git+https://github.com/Riffle-ai/grab-me.git"
   },
   "contributors": [
-    "Joris Rood (original author)"
+    {
+      "name": "Joris Rood"
+    }
   ],
   "type": "module",
   "sideEffects": false,
