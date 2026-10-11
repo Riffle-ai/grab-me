@@ -47,10 +47,14 @@ async function toClipboard(text: Promise<string>): Promise<boolean> {
     return true
   } catch {
     // Older engines refuse a promised blob; a plain write after the fact may still pass.
-    return navigator.clipboard.writeText(await text).then(
-      () => true,
-      () => false,
-    )
+    // No navigator.clipboard at all on an insecure origin (http on a custom host).
+    const plain = navigator.clipboard?.writeText(await text)
+    return plain
+      ? plain.then(
+          () => true,
+          () => false,
+        )
+      : false
   }
 }
 
@@ -77,7 +81,10 @@ const climbable = (p: Element | null | undefined): p is Element =>
   p != null && p !== document.body && p !== document.documentElement
 const mine = (e: MouseEvent) => e.altKey && e.button === 0
 
-async function deliver(els: Element[], latest: RefObject<GrabMeOptions>, say: (m: string) => void) {
+const copiedMessage = (copied: boolean, count: number) =>
+  copied ? (count > 1 ? `Copied ${count} elements` : 'Copied') : 'Copy refused · snippet in console'
+
+async function run(els: Element[], latest: RefObject<GrabMeOptions>, say: (m: string) => void) {
   const { onGrab, ...opts } = latest.current
   const result = grab(els, opts)
   if (onGrab) {
@@ -87,13 +94,16 @@ async function deliver(els: Element[], latest: RefObject<GrabMeOptions>, say: (m
   const text = result.then(format)
   const copied = await toClipboard(text)
   console.info(await text)
-  say(
-    copied
-      ? els.length > 1
-        ? `Copied ${els.length} elements`
-        : 'Copied'
-      : 'Copy refused · snippet in console',
-  )
+  say(copiedMessage(copied, els.length))
+}
+
+async function deliver(els: Element[], latest: RefObject<GrabMeOptions>, say: (m: string) => void) {
+  try {
+    await run(els, latest, say)
+  } catch (err) {
+    console.error(err)
+    say('grab failed · see console')
+  }
 }
 
 function listen(s: State, ui: Ui, latest: RefObject<GrabMeOptions>): () => void {

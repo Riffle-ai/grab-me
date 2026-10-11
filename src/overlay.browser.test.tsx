@@ -156,6 +156,44 @@ it('when the clipboard is refused, the snippet goes to the console and the toast
   await expect.element(s.getByText('grab-me · Copy refused · snippet in console')).toBeVisible()
 })
 
+it('with no navigator.clipboard at all (insecure origin), the snippet still reaches the console and the toast says so', async () => {
+  const original = Object.getOwnPropertyDescriptor(Navigator.prototype, 'clipboard')
+  Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true })
+  try {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    const s = await render(
+      <>
+        <App onClick={() => {}} />
+        <GrabMeOverlay />
+      </>,
+    )
+    press(s.getByTestId('a').element())
+    await expect.poll(() => info.mock.calls.at(-1)?.[0]).toMatch(/^<grab-me /)
+    await expect.element(s.getByText('grab-me · Copy refused · snippet in console')).toBeVisible()
+  } finally {
+    Reflect.deleteProperty(navigator, 'clipboard')
+    if (original) Object.defineProperty(Navigator.prototype, 'clipboard', original)
+  }
+})
+
+it('an onGrab that throws is reported to the console and the toast, not left uncaught', async () => {
+  const boom = new Error('boom')
+  const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const s = await render(
+    <>
+      <App onClick={() => {}} />
+      <GrabMeOverlay
+        onGrab={() => {
+          throw boom
+        }}
+      />
+    </>,
+  )
+  press(s.getByTestId('a').element())
+  await expect.poll(() => error.mock.calls.at(-1)?.[0]).toBe(boom)
+  await expect.element(s.getByText('grab-me · grab failed · see console')).toBeVisible()
+})
+
 const dashed = () =>
   [...document.querySelectorAll<HTMLElement>('[data-grab-me] div')].filter((d) =>
     d.style.outline.includes('dashed'),
