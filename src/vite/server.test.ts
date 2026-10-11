@@ -95,3 +95,16 @@ it('answers frames with the first project site, and hands a lookup failure to Vi
     expect.objectContaining({ message: expect.stringContaining('no source map') }),
   )
 })
+
+it('hands a failure while answering to Vite too, instead of an unhandled rejection', async () => {
+  const req = Readable.from([Buffer.from('{"frames":[]}')]) as unknown as IncomingMessage
+  const boom = new Error('socket closed')
+  const res = {
+    setHeader: () => {
+      throw boom
+    },
+  } as unknown as ServerResponse
+  const next = vi.fn()
+  await framesHandler(serverWith(() => undefined))(req, res, next)
+  expect(next).toHaveBeenCalledWith(boom)
+})

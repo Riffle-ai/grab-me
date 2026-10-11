@@ -73,7 +73,8 @@ export const framesHandler =
   (server: ViteDevServer) => (req: IncomingMessage, res: ServerResponse, next: Next) =>
     body(req)
       .then((b) => firstSite(server, (b as { frames: Frame[] }).frames))
-      .then((s) => send(res, s), next)
+      .then((s) => send(res, s))
+      .catch(next)
 
 const namesOf = (url: string | undefined) =>
   new URL(url ?? '', 'http://x').searchParams.get('names')?.split(',').filter(Boolean) ?? []
