@@ -54,7 +54,11 @@ function usable(r: NextFrame, root: string | null): Site | null {
 }
 
 function rejection(data: NextFrame[]): string | undefined {
-  return data.find((r) => r.status === 'rejected')?.reason
+  const rejected = data.find((r) => r.status === 'rejected')
+  if (!rejected) return undefined
+  return typeof rejected.reason === 'string' && rejected.reason
+    ? rejected.reason
+    : 'source frames: Next rejected the frame'
 }
 
 function first(data: NextFrame[], root: string | null): Site | null {

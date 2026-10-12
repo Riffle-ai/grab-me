@@ -32,6 +32,26 @@ it('answers null, not an error, when every frame is a dependency or there are no
   expect(await firstSite(server, [])).toBeNull()
 })
 
+it('treats a frame that is not a URL as not a module, so a dependency stack still answers null', async () => {
+  const map = { version: 3, sources: ['/repo/node_modules/r/a.js'], names: [], mappings: 'AAAA' }
+  const server = serverWith((url?: unknown) =>
+    url === '/a.js' ? { file: '/repo/node_modules/r/a.js', transformResult: { map } } : undefined,
+  )
+  const stack = [frame('http://h/a.js'), frame('<anonymous>'), frame('native')]
+  expect(await firstSite(server, stack)).toBeNull()
+})
+
+it('still throws for a project URL the module graph cannot map, and for a frame without a position', async () => {
+  const none = serverWith(() => undefined)
+  await expect(
+    firstSite(none, [frame('<anonymous>'), frame('http://h/src/card.tsx')]),
+  ).rejects.toThrow('http://h/src/card.tsx')
+  const map = { version: 3, sources: ['/repo/src/card.tsx'], names: [], mappings: 'AAAA' }
+  const mapped = serverWith(() => ({ file: '/repo/src/card.tsx', transformResult: { map } }))
+  const noLine = { ...frame('http://h/src/card.tsx'), line1: null }
+  await expect(firstSite(mapped, [noLine])).rejects.toThrow('http://h/src/card.tsx')
+})
+
 it('returns the first project frame, skipping unmapped ones before it', async () => {
   const map = { version: 3, sources: ['/repo/src/card.tsx'], names: [], mappings: 'AAAA' }
   const server = serverWith((url?: unknown) =>
@@ -107,4 +127,28 @@ it('hands a failure while answering to Vite too, instead of an unhandled rejecti
   const next = vi.fn()
   await framesHandler(serverWith(() => undefined))(req, res, next)
   expect(next).toHaveBeenCalledWith(boom)
+})
+
+const requestOf = (chunks: Buffer[]) => Readable.from(chunks) as unknown as IncomingMessage
+
+it('rejects a request body over 1 MB to Vite as an error, without answering', async () => {
+  const r = reply()
+  const next = vi.fn()
+  const big = Buffer.alloc(1024 * 1024 + 1, 'a')
+  await framesHandler(serverWith(() => undefined))(requestOf([big]), r.out, next)
+  expect(next).toHaveBeenCalledWith(
+    expect.objectContaining({ message: expect.stringContaining('1 MB') }),
+  )
+  expect(r.res.body).toBe('')
+})
+
+it('maps at most the first 50 frames', async () => {
+  const getModuleByUrl = vi.fn(() => undefined)
+  const frames = Array.from({ length: 60 }, (_, i) => frame(`http://h/${i}.tsx`))
+  await framesHandler(serverWith(getModuleByUrl))(
+    requestOf([Buffer.from(JSON.stringify({ frames }))]),
+    reply().out,
+    vi.fn(),
+  )
+  expect(getModuleByUrl).toHaveBeenCalledTimes(50)
 })

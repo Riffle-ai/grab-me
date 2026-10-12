@@ -175,13 +175,16 @@ function listen(s: State, ui: Ui, latest: RefObject<GrabMeOptions>): () => void 
     const child = s.trail.pop()
     if (child) show(child)
   }
-  const STEPS: Record<string, () => void> = { ArrowUp: up, ArrowDown: down }
+  const STEPS = new Map([
+    ['ArrowUp', up],
+    ['ArrowDown', down],
+  ])
   const grabbing = () => s.active && s.target !== null
 
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Alt') return activate()
     if (e.key === 'Escape' && s.picked.length) return unpick()
-    const step = STEPS[e.key]
+    const step = STEPS.get(e.key)
     if (!step || !grabbing()) return
     step()
     e.preventDefault()
