@@ -1,6 +1,11 @@
 // The dev server's half of grab-me for Vite: frames mapped through the module graph's own
 // source maps, and component definitions from the project source.
-import { originalPositionFor, TraceMap, type SourceMapInput } from '@jridgewell/trace-mapping'
+import {
+  originalPositionFor,
+  TraceMap,
+  type Needle,
+  type SourceMapInput,
+} from '@jridgewell/trace-mapping'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path'
 import type { ViteDevServer } from 'vite'
@@ -27,18 +32,22 @@ function mapped(mod: Mod) {
 }
 
 async function mapOf(server: ViteDevServer, f: Frame) {
-  if (!URL.canParse(f.file)) return null
   const mod = await server.environments.client.moduleGraph.getModuleByUrl(new URL(f.file).pathname)
   return mapped(mod)
 }
 
-/** The project site of one frame; null when it is a dependency, undefined when it cannot be mapped. */
+function projectSite(root: string, found: NonNullable<ReturnType<typeof mapped>>, at: Needle) {
+  const pos = originalPositionFor(new TraceMap(found.map), at)
+  const file = pos.source ? toProject(root, found.file, pos.source) : null
+  return file ? { file, line: pos.line } : null
+}
+
+/** The project site of one frame; null when it is no project module, undefined when it cannot be mapped. */
 async function site(server: ViteDevServer, f: Frame): Promise<Site | null | undefined> {
+  if (!URL.canParse(f.file)) return null
   const found = await mapOf(server, f)
   if (!found || !f.line1 || !f.column1) return undefined
-  const pos = originalPositionFor(new TraceMap(found.map), { line: f.line1, column: f.column1 - 1 })
-  const file = pos.source ? toProject(server.config.root, found.file, pos.source) : null
-  return file ? { file, line: pos.line } : null
+  return projectSite(server.config.root, found, { line: f.line1, column: f.column1 - 1 })
 }
 
 /**
@@ -56,9 +65,17 @@ export async function firstSite(server: ViteDevServer, frames: Frame[]): Promise
   return null
 }
 
+const MAX_BODY = 1024 * 1024
+const MAX_FRAMES = 50
+
 async function body(req: IncomingMessage): Promise<unknown> {
   const chunks: Buffer[] = []
-  for await (const c of req) chunks.push(c as Buffer)
+  let size = 0
+  for await (const c of req) {
+    size += (c as Buffer).length
+    if (size > MAX_BODY) throw new Error('grab-me: request body over 1 MB')
+    chunks.push(c as Buffer)
+  }
   return JSON.parse(Buffer.concat(chunks).toString('utf8'))
 }
 
@@ -72,7 +89,7 @@ type Next = (err?: unknown) => void
 export const framesHandler =
   (server: ViteDevServer) => (req: IncomingMessage, res: ServerResponse, next: Next) =>
     body(req)
-      .then((b) => firstSite(server, (b as { frames: Frame[] }).frames))
+      .then((b) => firstSite(server, (b as { frames: Frame[] }).frames.slice(0, MAX_FRAMES)))
       .then((s) => send(res, s))
       .catch(next)
 

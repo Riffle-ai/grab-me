@@ -290,3 +290,23 @@ it('pressing ⌥ with the pointer already over something outlines it; arrows and
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Alt', bubbles: true }))
   await expect.element(s.getByText(/button \d+×\d+/)).toBeVisible()
 })
+
+it('a key named like an inherited object property is not a step', async () => {
+  const s = await render(
+    <>
+      <App onClick={() => {}} />
+      <GrabMeOverlay />
+    </>,
+  )
+  const a = s.getByTestId('a').element()
+  hoverMove(a)
+  hoverMove(a)
+  const inherited = new KeyboardEvent('keydown', {
+    key: 'constructor',
+    altKey: true,
+    bubbles: true,
+    cancelable: true,
+  })
+  window.dispatchEvent(inherited)
+  expect(inherited.defaultPrevented).toBe(false)
+})

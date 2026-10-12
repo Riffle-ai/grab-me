@@ -58,6 +58,16 @@ it('throws what Next rejected with, so grab() can warn instead of dropping the j
   )
 })
 
+it.each([undefined, '', 42])(
+  'names the rejection when Next gives no usable reason (%s)',
+  async (reason) => {
+    stubNext([{ status: 'rejected', reason }])
+    await expect(
+      nextResolver({ distDir: '/repo/.next/dev' }).frames([frame], false),
+    ).rejects.toThrow('source frames: Next rejected the frame')
+  },
+)
+
 it('returns the first project frame relative to the root', async () => {
   stubNext([
     { status: 'fulfilled', value: { originalStackFrame: { file: 'node_modules/x.js', line1: 2 } } },
