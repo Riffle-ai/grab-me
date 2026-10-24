@@ -54,9 +54,12 @@ export const ownerName = (o: Owner) => (isFiber(o) ? typeName(o.type) : o.name) 
 const ownerParent = (o: Owner) => (isFiber(o) ? o._debugOwner : o.owner) ?? null
 
 /** The components that rendered `el`, nearest first. */
-export function owners(el: Element): Owner[] {
+export const owners = (el: Element): Owner[] => ownersOf(fiberOf(el))
+
+/** The components that rendered a fiber, nearest first. */
+export function ownersOf(fiber: Fiber | null): Owner[] {
   const out: Owner[] = []
-  let o = fiberOf(el)?._debugOwner ?? null
+  let o = fiber?._debugOwner ?? null
   while (o && out.length < MAX_OWNERS) {
     out.push(o)
     o = ownerParent(o)
