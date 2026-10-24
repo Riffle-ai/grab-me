@@ -27,11 +27,15 @@ line and speaks your design system's names, not raw pixels.
   `(server)`.
 - **Several at once.** ⌥⇧-click adds elements to one snippet; ⌥↑ / ⌥↓ step to the parent and back.
 - **Nothing in production.** Next and Vite builds ship zero bytes of it, and a test proves it.
+- **React Native too.** Tap to grab in the simulator or on a phone, and `grab-me screen` reads
+  the whole screen as text for your agent, through Metro's own debugger connection.
 
 ## Requirements
 
 React 19 in a development build. TypeScript projects need `moduleResolution` set to `bundler`
-or `node16` / `nodenext`, because the package exposes subpath exports (`/next`, `/vite`).
+or `node16` / `nodenext`, because the package exposes subpath exports (`/next`, `/vite`,
+`/native`). React Native needs a development build on the New Architecture; the `grab-me` CLI
+needs Node 20.19 or later.
 
 ## Install
 
@@ -118,7 +122,112 @@ through `transformIndexHtml`. In an SSR framework built on Vite, that hook may n
 the overlay will not appear; render `GrabMeOverlay` yourself in a client component with
 `viteResolver()` from `@riffle-ai/grab-me/vite/client`, keeping the plugin for its two endpoints.
 
-## Use
+### React Native (Expo)
+
+Wrap the app's root once. In a development build it adds the picker and a handle the
+`grab-me` CLI talks to; in a release build `GrabMe` renders its children only and the picker
+is left out of the bundle.
+
+```tsx
+// app/_layout.tsx (expo-router), or your root component
+import { GrabMe, grabMeMenuItem } from '@riffle-ai/grab-me/native'
+import { registerDevMenuItems } from 'expo-dev-menu'
+
+if (__DEV__) registerDevMenuItems([...yourItems, grabMeMenuItem])
+
+export default function RootLayout() {
+  return (
+    <GrabMe
+      stopAfter={['src/ui/']}
+      route={() => pathname}
+      tokens={() => ({
+        color: colors,
+        space: tokens.space,
+        radius: tokens.radius,
+        text: tokens.fontSize,
+      })}
+    >
+      <Stack />
+    </GrabMe>
+  )
+}
+```
+
+Expo's dev menu keeps one list of custom items per app and each registration replaces it, so
+`grabMeMenuItem` goes into your own list rather than grab-me registering itself. Without
+`expo-dev-menu`, React Native's own dev menu shows the same item.
+
+Arm the picker with **Grab me Native** in the dev menu, a hotkey (below) or `grab-me pick`.
+Drag to see what is under your finger and lift to copy it; the bar's ↑ / ↓ walk to the parent
+and back, **+** adds another element to the snippet and ✕ closes. The snippet goes to the
+clipboard (React Native's own clipboard module, or `@react-native-clipboard/clipboard` /
+`expo-clipboard` when installed); in the iOS Simulator that is your Mac's clipboard.
+
+```
+<grab-me platform="ios" route="/" window="402×874" theme="light">
+<Text> "Open"
+  jsx: src/ui/status-chip.tsx:29
+  rendered by:
+    <StatusChip> at src/ui/visit-card.tsx:96
+    <VisitCard> at src/features/work-orders/day-list.tsx:106
+  box 33×18 · font label (14)/18 Inter_500Medium · color text.primary (#000000)
+</grab-me>
+```
+
+Owners show where each component is _rendered_ (the JSX call in its parent). Tokens are matched
+by value against the objects `tokens` returns, read at grab time so a theme switch is followed.
+
+#### From the terminal, for you or your agent
+
+The `grab-me` command reads the running app through the debugger connection Metro already
+serves for React Native DevTools, so it runs beside an open DevTools window and nothing in your
+app or Metro config serves it.
+
+| Command                 | Does                                                                    |
+| ----------------------- | ----------------------------------------------------------------------- |
+| `grab-me screen`        | every text and labelled control in view, top to bottom, with its source |
+| `grab-me at X Y`        | the element at a point of the window, in points                         |
+| `grab-me pick`          | arm the picker and print the element you tap                            |
+| `grab-me arm`           | arm the picker and return at once (for a hotkey)                        |
+| `grab-me last`          | the last element grabbed in the app                                     |
+| `grab-me raycast [dir]` | write a Raycast script command that runs `grab-me arm`                  |
+
+`--port` picks the Metro port (default `8081`, or `RCT_METRO_PORT`) and `--device` a device by
+name when several are connected. `grab-me screen` lets an agent read a screen without a
+screenshot:
+
+```
+<grab-me-screen platform="ios" route="/" window="402×874" theme="light">
+  y310 "Volgende" — <DayList> src/features/work-orders/day-list.tsx:43
+  y337 [Bakkerij de Baguette WB-2045] — <DayCard> src/features/work-orders/day-list.tsx:106
+  y784 [New log] — <AppNav> src/features/navigation/app-nav.tsx:128
+</grab-me-screen>
+```
+
+#### A hotkey with Raycast
+
+```sh
+pnpm exec grab-me raycast
+```
+
+This writes `~/.config/raycast/scripts/grab-me-arm.sh`, a script that arms the picker in the
+first app with grab-me on Metro ports 8081–8084. Run it from a project that has the package
+installed, not through a one-off `npx` download, so the script points at a copy that stays.
+Then, once, in Raycast:
+
+1. Settings (⌘,) → **Extensions** → **+** → **Add Script Directory**, and choose
+   `~/.config/raycast/scripts` (in the folder picker, ⌘⇧G and paste the path).
+2. Select **Grab me Native** in the list, click **Record Hotkey** and press your shortcut.
+
+The hotkey is global, so pick one your other apps do not need, or accept that it takes over
+theirs (⌘G is Find Next in most Mac apps). Running **Grab me Native** from Raycast's search
+shows whether arming worked.
+
+Tested with React Native 0.86 and Expo 57 (New Architecture) in the iOS Simulator. Not yet
+supported: grabbing inside native sheets and modals (they are presented above the picker), and
+Android has not been tried.
+
+## Use (web)
 
 | Gesture  | Does                                        |
 | -------- | ------------------------------------------- |
