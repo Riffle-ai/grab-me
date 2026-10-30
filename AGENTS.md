@@ -50,7 +50,7 @@ request whose design was settled merged in 9 min.
 5. **Stop rules.** 30 min on a slice without a pull request open, a second red
    CI run on one pull request, or any design question: stop and hand back to
    whoever briefed the slice. A pull request never gets a third CI run. A
-   Critical finding in the same area twice means a redesign, briefed anew by an
+   High finding in the same area twice means a redesign, briefed anew by an
    oracle or senior reviewer, not another patch.
 6. **Measure.** Each slice's pull request body records t0 (start), t1 (pull
    request open), t2 (review posted), t3 (CI done), t4 (merged), the red CI runs
