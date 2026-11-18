@@ -33,8 +33,9 @@ request whose design was settled merged in 9 min.
    `pnpm typecheck`, `pnpm lint`, `pnpm format` and the tests of what changed
    (`pnpm test <path>`), and `pnpm crap` when a source function changed.
    `pnpm e2e` and `pnpm test:prod` stay in CI. CRAP is at most 6 for every
-   function in `src/`: `pnpm crap` (`scripts/crap.mjs`) fails above it, and CI
-   runs it on every pull request.
+   function in `src/`, a design target read locally: `pnpm crap`
+   (`scripts/crap.mjs`) is a local command that fails above it, and CI does
+   not run it. Aim for the limit by keeping functions simple.
 4. **One review, beside CI.** Open the pull request as a draft, then one fresh
    reviewer reviews it, security included, against the brief's acceptance
    criteria and safety rules, not an open-ended hunt, while CI runs. Each
